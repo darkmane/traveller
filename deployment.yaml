@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traveller-deployment
+  labels:
+    app: traveller
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: traveller
+  template:
+    metadata:
+      labels:
+        app: traveller
+    spec:
+      containers:
+      - name: traveller
+        image: traveller:0.0.1
+        ports:
+        - containerPort: 8080
