@@ -1,43 +1,56 @@
 package main
 
-
-import "github.com/darkmane/traveller/handlers"
 import (
+	"fmt"
 	"log"
 	"net/http"
-	"gopkg.in/yaml.v2"
 	"os"
+
+	"github.com/darkmane/traveller/handlers"
+	"github.com/kelseyhightower/envconfig"
+	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
-	Database string
-	Username string
-	Password string
+	Database string `yaml:"database", envconfig:DATABASE`
+	Username string `yaml:"username", envconfig:DBUSERNAME`
+	Password string `yaml:"password", envconfig:DBPASSWORD`
+	Seed     string `yaml:"seed", envconfig:RNG_SEED`
 }
 
-
 func main() {
+	cfg := GetConfig()
+	fmt.Println("Database: %s, Username: %s, Seed: %s", cfg.Database, cfg.Username, cfg.Seed)
 	handlers.RegisterHandlers(http.HandleFunc)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func processError(err error){
+func processError(err error) {
 	log.Fatal("Error: %s", err)
 }
-
-func loadConfig() Config {
+func GetConfig() Config {
+	var cfg Config
+	loadConfigFile(&cfg)
+	readEnv(&cfg)
+	return cfg
+}
+func loadConfigFile(cfg *Config) {
 	f, err := os.Open("config.yml")
 	if err != nil {
 		processError(err)
 	}
 	defer f.Close()
 
-	var cfg Config
 	decoder := yaml.NewDecoder(f)
 	err = decoder.Decode(&cfg)
 	if err != nil {
 		processError(err)
 	}
+}
 
-	return cfg
+func readEnv(cfg *Config) {
+	err := envconfig.Process("", cfg)
+	if err != nil {
+		processError(err)
+	}
 }
