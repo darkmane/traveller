@@ -5,7 +5,7 @@ metadata:
   labels:
     app: traveller
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: traveller
@@ -16,6 +16,8 @@ spec:
     spec:
       containers:
       - name: traveller
-        image: traveller:0.0.1
+        image: darkmane/traveller:0.0.1
         ports:
-        - containerPort: 8080
+        - name: http
+          containerPort: 8080
+          hostPort: 8080

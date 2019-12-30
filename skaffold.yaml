@@ -1,0 +1,16 @@
+apiVersion: skaffold/v1
+kind: Config
+metadata:
+  name: traveller
+build:
+  artifacts:
+  - image: darkmane/traveller
+deploy:
+  kubectl:
+    manifests:
+    - deployment.yaml
+portForward:
+- resourceType: deployment
+  resourceName: traveller-deployment
+  port: 8080
+  localPort: 8080
