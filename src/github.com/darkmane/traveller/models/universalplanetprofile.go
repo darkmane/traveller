@@ -1,13 +1,11 @@
 package models
 
-import "fmt"
-
 type UniversalPlanetProfile struct {
- Size int
- Atmosphere int
- Hydro int
- Population int
- Government int
- LawLevel int
- TechLevel int
+	Size       int `json:"size"`
+	Atmosphere int `json:"atmosphere"`
+	Hydro      int `json:"hydro"`
+	Population int `json:"population"`
+	Government int `json:"government"`
+	LawLevel   int `json:"lawlevel"`
+	TechLevel  int `json:"techlevel"`
 }
