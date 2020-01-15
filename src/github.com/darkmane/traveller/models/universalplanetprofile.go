@@ -10,7 +10,7 @@ type UniversalPlanetProfile struct {
 	TechLevel  int `json:"techlevel"`
 }
 
-func (upp *UniversalPlanetProfile) Load(init map[string]int) {
+func (upp *UniversalPlanetProfile) FromMap(init map[string]int) {
 	if val, ok := init["size"]; ok {
 		upp.Size = val
 	}
@@ -32,4 +32,17 @@ func (upp *UniversalPlanetProfile) Load(init map[string]int) {
 	if val, ok := init["techlevel"]; ok {
 		upp.TechLevel = val
 	}
+}
+
+func (upp *UniversalPlanetProfile) ToMap() map[string]interface{} {
+	m := make(map[string]interface{})
+	m["size"] = upp.Size
+	m["atmosphere"] = upp.Atmosphere
+	m["hydro"] = upp.Hydro
+	m["population"] = upp.Population
+	m["government"] = upp.Government
+	m["lawlevel"] = upp.LawLevel
+	m["techlevel"] = upp.TechLevel
+
+	return m
 }

@@ -32,7 +32,7 @@ func createStarSystemHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ss := new(models.StarSystem)
-	ss.Load(init)
+	ss.FromMap(init)
 	results, err := json.Marshal(ss)
 	if err != nil {
 		w.WriteHeader(500)

@@ -24,7 +24,7 @@ type Planet struct {
 	Port Starport `json:"starport,string"`
 	maxOrbits  int `json:"-"`
 	Satellites map[int]*Planet `json:"-"`
-	Classifications TradeClassifications `json:"classifications,string"`
+	Classifications TradeClassifications `json:"classifications"`
 }
 
 func (p *Planet)Type() BodyType {
@@ -33,6 +33,16 @@ func (p *Planet)Type() BodyType {
 		bt = PlanetoidBelt
 	}
 	return bt
+}
+
+func (p *Planet)ToMap() map[string]interface{} {
+	m := p.UniversalPlanetProfile.ToMap()
+
+	m["name"] = p.Name
+	m["starport"] = p.Port
+	m["classifications"] = p.Classifications
+
+	return m
 }
 
 func NewPlanet(initial map[string]int) *Planet {

@@ -213,9 +213,10 @@ func (ss *StarSystem) UnmarshalJSON(b []byte) error{
 
 func (ss *StarSystem) MarshalJSON() ([]byte, error){
 	p := ss.Planet
+	output := p.ToMap()
 	dg := NewDiceGenerator("foo")
 	ss.Classifications = calculateTradeFacilities(&dg, &p, ss, HABITABLE)
-	output := make(map[string]interface{})
+	
 	output["x"] = ss.X
 	output["y"] = ss.Y
 	output["sector"] = ss.Sector
