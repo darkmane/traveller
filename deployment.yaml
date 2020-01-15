@@ -17,6 +17,9 @@ spec:
       containers:
       - name: traveller
         image: darkmane/traveller:0.0.1
+        env:
+        - name: RNG_SEED
+          value: override
         ports:
         - name: http
           containerPort: 8080

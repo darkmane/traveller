@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -9,6 +8,8 @@ import (
 	"github.com/darkmane/traveller/handlers"
 	"github.com/kelseyhightower/envconfig"
 	"gopkg.in/yaml.v2"
+
+	. "github.com/darkmane/traveller/util"
 )
 
 type Config struct {
@@ -20,14 +21,12 @@ type Config struct {
 
 func main() {
 	cfg := GetConfig()
-	fmt.Println("Database: %s, Username: %s, Seed: %s", cfg.Database, cfg.Username, cfg.Seed)
+	log.Printf("New Database: %v, Username: %v, Seed: %v", cfg.Database, cfg.Username, cfg.Seed)
 	handlers.RegisterHandlers(http.HandleFunc)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-func processError(err error) {
-	log.Fatal("Error: %s", err)
-}
+
 func GetConfig() Config {
 	var cfg Config
 	loadConfigFile(&cfg)
@@ -37,20 +36,20 @@ func GetConfig() Config {
 func loadConfigFile(cfg *Config) {
 	f, err := os.Open("config.yml")
 	if err != nil {
-		processError(err)
+		ProcessError(err)
 	}
 	defer f.Close()
 
 	decoder := yaml.NewDecoder(f)
 	err = decoder.Decode(&cfg)
 	if err != nil {
-		processError(err)
+		ProcessError(err)
 	}
 }
 
 func readEnv(cfg *Config) {
-	err := envconfig.Process("", cfg)
+	err := envconfig.Process("traveller", cfg)
 	if err != nil {
-		processError(err)
+		ProcessError(err)
 	}
 }
