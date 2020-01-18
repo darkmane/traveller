@@ -1,5 +1,10 @@
 package models
 
+import (
+	. "github.com/darkmane/traveller/util"
+	"log"
+)
+
 type UniversalPlanetProfile struct {
 	Size       int `json:"size"`
 	Atmosphere int `json:"atmosphere"`
@@ -10,27 +15,34 @@ type UniversalPlanetProfile struct {
 	TechLevel  int `json:"techlevel"`
 }
 
-func (upp *UniversalPlanetProfile) FromMap(init map[string]int) {
-	if val, ok := init["size"]; ok {
-		upp.Size = val
-	}
-	if val, ok := init["atmosphere"]; ok {
-		upp.Atmosphere = val
-	}
-	if val, ok := init["hydro"]; ok {
-		upp.Hydro = val
-	}
-	if val, ok := init["population"]; ok {
-		upp.Population = val
-	}
-	if val, ok := init["government"]; ok {
-		upp.Government = val
-	}
-	if val, ok := init["lawlevel"]; ok {
-		upp.LawLevel = val
-	}
-	if val, ok := init["techlevel"]; ok {
-		upp.TechLevel = val
+func (upp *UniversalPlanetProfile) FromMap(init map[string]interface{}) {
+	for k, v := range init {
+		switch k {
+			case "size":
+				upp.Size = Interface2Int(v)
+				break;
+			case "atmosphere":
+				upp.Atmosphere = Interface2Int(v)
+				break;
+			case "hydro":
+				upp.Hydro = Interface2Int(v)
+				break;
+			case "population":
+				upp.Population = Interface2Int(v)
+				break;
+			case "government":
+				upp.Government = Interface2Int(v)
+				break;
+			case "lawlevel":
+				upp.LawLevel = Interface2Int(v)
+				break;
+			case "techlevel":
+				upp.TechLevel = Interface2Int(v)
+				break;
+			default:
+				log.Printf("%s: %v", k, v)
+				break;
+		}
 	}
 }
 

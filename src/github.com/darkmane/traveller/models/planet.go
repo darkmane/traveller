@@ -21,7 +21,7 @@ type Planet struct {
 	Id int `json:"-"`
 	Name string `json:"name"`
 	UniversalPlanetProfile
-	Port Starport `json:"starport,string"`
+	Port Starport `json:"starport"`
 	maxOrbits  int `json:"-"`
 	Satellites map[int]*Planet `json:"-"`
 	Classifications TradeClassifications `json:"classifications"`
@@ -35,12 +35,29 @@ func (p *Planet)Type() BodyType {
 	return bt
 }
 
+func (p *Planet)FromMap(init map[string]interface{}){
+	for k, v := range init {
+		switch k {
+			case "name":
+				p.Name = v.(string)
+				break;
+			case "starport":
+				s := []byte(v.(string))
+				p.Port.UnmarshalJSON(s)
+				break;
+		}
+	}
+	
+	upp := p.UniversalPlanetProfile
+	upp.FromMap(init)
+	p.UniversalPlanetProfile = upp
+}
+
 func (p *Planet)ToMap() map[string]interface{} {
 	m := p.UniversalPlanetProfile.ToMap()
 
 	m["name"] = p.Name
 	m["starport"] = p.Port
-	m["classifications"] = p.Classifications
 
 	return m
 }

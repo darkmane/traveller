@@ -6,7 +6,7 @@ import (
 	"crypto/sha256"
 	"math/rand"
 	"errors"
-
+	
 	"gopkg.in/yaml.v2"
 )
 
@@ -128,4 +128,9 @@ func MaxInt(nums ...int) int{
 		}
 	}
 	return max
+}
+
+func Interface2Int(intf interface{}) int {
+	t := int(intf.(float64))
+	return t
 }

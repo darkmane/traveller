@@ -28,8 +28,8 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "ROOT")
 }
 
-func parseRequest(r *http.Request) (map[string]int, error) {
-	var rv map[string]int
+func parseRequest(r *http.Request) (map[string]interface{}, error) {
+	var rv map[string]interface{}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&rv)
 	if err != nil {

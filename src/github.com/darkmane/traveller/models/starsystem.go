@@ -3,8 +3,9 @@ package models
 import (
 	"fmt"
 	"bytes"
-	"encoding/json"
+	"encoding/json"	
 	. "github.com/darkmane/traveller/util"
+	"log"
 )
 
 type TravelZone int
@@ -156,8 +157,8 @@ type StarSystem struct {
 	Sector     string     `json:"sector"`
 	SubSector  string     `json:"subsector"`
 	TravelZone TravelZone `json:"travel_zone,string"`
-	ScoutBase  bool       `json:"scout,string"`
-	NavalBase  bool       `json:"naval,string"`
+	ScoutBase  bool       `json:"scout"`
+	NavalBase  bool       `json:"naval"`
 	Orbits     []Orbit    `json:"orbits"`
 }
 
@@ -176,42 +177,40 @@ func (ss *StarSystem) generate() {
 
 }
 
-func (ss *StarSystem) Load(init map[string]int) {
-	if val, ok := init["x"]; ok {
-		ss.X = val
+func (ss *StarSystem) FromMap(init map[string]interface{}) {
+	for k, v := range init {
+		switch k {
+		case "x":
+			ss.X = Interface2Int(v)
+			break
+		case "y":
+			ss.Y = Interface2Int(v)
+			break
+		case "sector":
+			ss.Sector = v.(string)
+			break
+		case "subsector":
+			ss.SubSector = v.(string)
+			break
+		case "travel_zone":
+			s := []byte(v.(string))
+			ss.TravelZone.UnmarshalJSON(s)
+			break
+		case "scout":
+			ss.ScoutBase = v.(bool)
+			break
+		case "navy":
+			ss.NavalBase = v.(bool)
+			break
+		}
 	}
-	if val, ok := init["y"]; ok {
-		ss.Y = val
-	}
-	ss.generate()
-	if val, ok := init["size"]; ok {
-		ss.Size = val
-	}
-	if val, ok := init["atmosphere"]; ok {
-		ss.Atmosphere = val
-	}
-	if val, ok := init["hydro"]; ok {
-		ss.Hydro = val
-	}
-	if val, ok := init["population"]; ok {
-		ss.Population = val
-	}
-	if val, ok := init["government"]; ok {
-		ss.Government = val
-	}
-	if val, ok := init["lawlevel"]; ok {
-		ss.LawLevel = val
-	}
-	if val, ok := init["techlevel"]; ok {
-		ss.TechLevel = val
-	}
+
+	p := ss.Planet
+	p.FromMap(init)
+	ss.Planet = p
 }
 
-func (ss *StarSystem) UnmarshalJSON(b []byte) error{
-	return nil
-}
-
-func (ss *StarSystem) MarshalJSON() ([]byte, error){
+func (ss *StarSystem) ToMap() map[string]interface{} {
 	p := ss.Planet
 	output := p.ToMap()
 	dg := NewDiceGenerator("foo")
@@ -224,7 +223,26 @@ func (ss *StarSystem) MarshalJSON() ([]byte, error){
 	output["travel_zone"] = ss.TravelZone
 	output["scout"] = ss.ScoutBase
 	output["naval"] = ss.NavalBase
-	output["orbits"] = ss.Orbits
-	output["classifications"] = ss.Classifications
-	return json.Marshal(output)
+	os := make([]Orbit, 0)
+	if ss.Orbits != nil { 
+		log.Printf("Orbits is not nil: %v", ss.Orbits)
+		os = ss.Orbits
+	 }
+	
+	output["orbits"] = os
+	
+	return output
+}
+
+func (ss *StarSystem) UnmarshalJSON(b []byte) error{
+	working_copy := make(map[string]interface{})
+	err := json.Unmarshal(b, &working_copy)
+	if err != nil { return err }
+	ss.FromMap(working_copy)
+
+	return nil
+}
+
+func (ss *StarSystem) MarshalJSON() ([]byte, error){
+	return json.Marshal(ss.ToMap())
 }
