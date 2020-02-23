@@ -1,20 +1,33 @@
 package models
 
-type Orbit struct {
-	Id             int
+type Orbit interface {
+	GetType() BodyType
+	GetOrbit() (int, int)
+}
+
+// type Orbit struct {
+// 	Id             int
+// 	StarSystemId   int
+// 	StellarOrbit   int
+// 	PlanetaryOrbit int
+// 	bodyId         int64
+// 	bodyType       BodyType
+// }
+
+// func (o *Orbit) GetType() BodyType {
+// 	return o.bodyType
+// }
+
+type EmptyOrbit struct {
 	StarSystemId   int
 	StellarOrbit   int
 	PlanetaryOrbit int
-	bodyId         int64
-	bodyType       BodyType
 }
 
-func (o *Orbit) GetBody() (*Body, error) {
-	return nil, nil
+func (eo *EmptyOrbit) GetType() BodyType {
+	return Empty
 }
 
-func (o *Orbit) SetBody(b *Body) error {
-	o.bodyId = b.Id
-	o.bodyType = b.GetType()
-	return nil
+func (eo *EmptyOrbit) GetOrbit() (int, int) {
+	return eo.StellarOrbit, eo.PlanetaryOrbit
 }

@@ -15,6 +15,10 @@ const (
 
 	Ring  = 0
 	Small = -1
+
+	name string = "name"
+	starport string = "starport"
+	classifications string = "classifications"
 )
 
 type Planet struct {
@@ -22,12 +26,14 @@ type Planet struct {
 	Name string `json:"name"`
 	UniversalPlanetProfile
 	Port Starport `json:"starport"`
-	maxOrbits  int `json:"-"`
+	ScoutBase  bool         `json:"scout"`
+	NavalBase  bool         `json:"naval"`
+	
 	Satellites map[int]*Planet `json:"-"`
 	Classifications TradeClassifications `json:"classifications"`
 }
 
-func (p *Planet)Type() BodyType {
+func (p *Planet)GetType() BodyType {
 	bt := RockyPlanet
 	if p.Size == Ring {
 		bt = PlanetoidBelt
@@ -36,12 +42,15 @@ func (p *Planet)Type() BodyType {
 }
 
 func (p *Planet)FromMap(init map[string]interface{}){
+	if p == nil {
+		p = new(Planet)
+	}
 	for k, v := range init {
 		switch k {
-			case "name":
+			case name:
 				p.Name = v.(string)
 				break;
-			case "starport":
+			case starport:
 				s := []byte(v.(string))
 				p.Port.UnmarshalJSON(s)
 				break;
@@ -54,16 +63,49 @@ func (p *Planet)FromMap(init map[string]interface{}){
 }
 
 func (p *Planet)ToMap() map[string]interface{} {
+	if p == nil {
+		return make(map[string]interface{})
+	}
+
 	m := p.UniversalPlanetProfile.ToMap()
 
-	m["name"] = p.Name
-	m["starport"] = p.Port
+	m[name] = p.Name
+	m[starport] = p.Port
 
 	return m
 }
 
-func NewPlanet(initial map[string]int) *Planet {
-	return new(Planet)
+func NewPlanet(initial map[string]interface{}, dg *DiceGenerator) *Planet {
+	p := new(Planet)
+	
+// 	This checklist smrns generation of
+// the main world in a star system. 1. Determinelyltern prerena. 2. Checksystemconuno tat4e.
+// A. Findrtarpmtype. 8.Ch-k for naval bare. C.CheckforXWI bare. D.Check for gar giant.
+	p.Port = generateStarport(dg)
+	p.NavalBase = generateNavalBase(dg, p.Port)
+	p.ScoutBase = generateScoutBase(dg, p.Port)
+	p.Size = generateSize(dg)
+	p.Atmosphere = generateAtmosphere(dg, p.Size)
+	p.Hydro = generateHydrosphere(dg, p.Size, p.Atmosphere)
+	p.Population = MaxInt(0, dg.RollDiceWithModifier(2, -2))
+	p.Government = MaxInt(0, dg.RollDiceWithModifier(2, -7 + p.Population))
+	p.LawLevel = MaxInt(0, dg.RollDiceWithModifier(2, -7 + p.Government))
+	
+
+	
+// 3. Name main world. 4.Decidsiftrawlzonemdsd. 5. Generate mainworld UPP.
+// A. Notertarpontyps.
+// 8. Main world rile: 2D-2.
+// C. Main world atmesphere: 2D-7 +
+// size. Ifsize0, thenatmorphere0.
+// D. Main world hydrographiu: ZD-7 +sire. If size I-,then hydrographiu 0;
+// if atmesphere 1- or A+. DM -4. If 1-1 than 0. then 0; i f greater than A, then A.
+// E. Populatian: 2D-2.
+// F. Government: 2D-7+populatim. G. Law Level: 2D.7+ povernrnent. H. Techndwical Iwel: 1D + DM9
+// from the tech level table.
+// 8. Notetra&elmrificationr.
+// 7. Recordrtatirticr for r e f e m . 8.Mapwrtem onrubrenormapgrid. 9. Establishcommunicationsroutes.
+	return p
 }
 
 func newMinorPlanet(dg *DiceGenerator, star Star, orbit int, zone Zone, mainPlanet *StarSystem) *Planet {
@@ -193,7 +235,7 @@ func newSatellite(dg *DiceGenerator, zone Zone, mainPlanet *StarSystem, parentPl
 	gov := dg.RollDiceWithModifier(1, 0)
 	law := dg.RollDiceWithModifier(1, -3) + mainPlanet.LawLevel
 
-	switch parentPlanet.Type() {
+	switch parentPlanet.GetType() {
 	case SmallGasGiant:
 		size = dg.RollDiceWithModifier(2, -6);
 		break;
@@ -359,5 +401,72 @@ func calculateTradeFacilities(dg *DiceGenerator, profile *Planet, mainPlanet *St
 	return tc
 }
 
+func generateStarport(dg *DiceGenerator) (Starport) {
+	var sp Starport
+	switch dg.Roll() {
+	case 2,3,4:
+		sp = StarportA
+	case 5,6:
+		sp = StarportB
+	case 7, 8:
+		sp = StarportC
+	case 9:
+		sp = StarportD
+	case 10, 11:
+		sp = StarportE
+	case 12:
+		sp = StarportX
+	}
+	return sp
+}
 
+func generateNavalBase(dg *DiceGenerator, sp Starport) bool {
+	switch sp {
+	case StarportA, StarportB:
+		return (dg.Roll() > 7)
+	default:
+		return false
+	}
+}
 
+func generateScoutBase(dg *DiceGenerator, sp Starport) bool {
+	dm := 0
+	switch sp {
+	case StarportC:
+		dm = -1
+	case StarportB:
+		dm = -2
+	case StarportA:
+		dm = -3
+	case StarportE, StarportX:
+		return false
+	}
+
+	return (dg.RollDiceWithModifier(2, dm) > 6)
+}
+
+func generateSize(dg *DiceGenerator) int {
+	roll := dg.RollDiceWithModifier(2, -2)
+	return MaxInt(roll, 0)
+}
+
+func generateAtmosphere(dg *DiceGenerator, size int) int {
+	roll := dg.RollDiceWithModifier(2, -7 + size)
+	return MaxInt(0, roll)
+}
+
+func generateHydrosphere(dg *DiceGenerator, size int, atmos int) int {
+	dm := 0
+	switch {
+	case atmos < 2:
+		dm = -4
+	case atmos > 9:
+		dm = -4
+	}
+	if size < 2 {
+		return 0
+	} else {
+		roll := dg.RollDiceWithModifier(2, dm)
+		return MaxInt(MinInt(roll, 10), 0)
+	}
+}

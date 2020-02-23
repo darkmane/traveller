@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/darkmane/traveller/models"
+	. "github.com/darkmane/traveller/util"
 )
 
 func starSystemHandlers(w http.ResponseWriter, r *http.Request) {
@@ -24,6 +26,9 @@ func starSystemHandlers(w http.ResponseWriter, r *http.Request) {
 }
 
 func createStarSystemHandler(w http.ResponseWriter, r *http.Request) {
+
+	// t := time.Now()
+	// dg := NewDiceGenerator(fmt.Sprintf("%d", t.Unix()))
 	init, err := parseRequest(r)
 	log.Printf(fmt.Sprintf("Body: %v", init))
 	if err != nil {
@@ -44,7 +49,19 @@ func createStarSystemHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getStarSystemHandler(w http.ResponseWriter, r *http.Request) {
-	ss := new(models.StarSystem)
+	// ss := new(models.StarSystem)
+	// dg := NewDiceGenerator(cfg.Seed)
+	t := time.Now()
+	dg := NewDiceGenerator(fmt.Sprintf("%d", t.Unix()))
+
+	ss := models.NewStarSystem(make(map[string]interface{}), &dg)
+	if ss.Planet == nil {
+		log.Printf("Planet is nil")
+	}
+
+	// if ss.Planet.UniversalPlanetProfile == nil {
+	// 	log.Printf("UPP is nil")
+	// }
 	results, err := json.Marshal(ss)
 	if err != nil {
 		w.WriteHeader(500)
@@ -57,6 +74,7 @@ func getStarSystemHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getMultipleStarSystemHandler(w http.ResponseWriter, r *http.Request) {
+	// dg := NewDiceGenerator(cfg.Seed)
 	upp := new(models.UniversalPlanetProfile)
 	var upps []models.UniversalPlanetProfile
 	upps = make([]models.UniversalPlanetProfile, 1)
@@ -72,6 +90,7 @@ func getMultipleStarSystemHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateStarSystemHandler(w http.ResponseWriter, r *http.Request) {
+	// dg := NewDiceGenerator(cfg.Seed)
 	upp := new(models.UniversalPlanetProfile)
 	results, err := json.Marshal(upp)
 	if err != nil {
@@ -84,5 +103,6 @@ func updateStarSystemHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteStarSystemHandler(w http.ResponseWriter, r *http.Request) {
+	// dg := NewDiceGenerator(cfg.Seed)
 	log.Printf("deleteStarSystemHandler")
 }

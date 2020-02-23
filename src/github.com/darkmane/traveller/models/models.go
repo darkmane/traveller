@@ -13,7 +13,12 @@ const (
 	LargeGasGiant
 	PlanetoidBelt
 	StellarBody
+	Empty
 )
+
+type Body interface {
+	GetType() BodyType
+}
 
 var bodyTypeToString = map[BodyType]string{
 	StellarBody: "STAR",
@@ -29,14 +34,6 @@ var bodyTypeToID = map[string]BodyType{
 	"LARGE_GAS_GIANT": LargeGasGiant, 
 	"PLANETOID_BELT": PlanetoidBelt,
 	"ROCKY_PLANET": RockyPlanet,
-}
-
-type Body struct {
-	Id int64
-}
-
-func (b *Body) GetType() BodyType {
-	return -1
 }
 
 // MarshalJSON marshals the enum as a quoted json string

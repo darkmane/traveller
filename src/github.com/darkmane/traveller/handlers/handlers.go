@@ -6,7 +6,10 @@ import (
 	"log"
 	"encoding/json"
 
+	. "github.com/darkmane/traveller/util"
 )
+var cfg Config
+
 
 const (
 	GET string = "GET"
@@ -20,6 +23,7 @@ const (
 // Registers all Handlers for the Traveller REST API
 //    -- StarSystem handlers
 func RegisterHandlers(httpFunc func(pattern string, handler func(http.ResponseWriter, *http.Request))) {
+	cfg = GetConfig()
 	httpFunc("/starsystem", starSystemHandlers)
 	httpFunc("/", rootHandler)
 }

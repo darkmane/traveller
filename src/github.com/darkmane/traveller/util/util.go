@@ -1,12 +1,14 @@
 package util
 
 import (
-	"os"
 	"log"
+	"os"
+
+	// "fmt"
 	"crypto/sha256"
-	"math/rand"
 	"errors"
-	
+	"math/rand"
+
 	"gopkg.in/yaml.v2"
 )
 
@@ -37,7 +39,7 @@ func NewDiceGenerator(seed string) DiceGenerator {
 func (dg *DiceGenerator) RollDiceWithModifier(dice int, mod int) int {
 	v := 0
 	for index := 1; index <= dice; index++ {
-		v = dg.rng.Intn(sides)
+		v += dg.rng.Intn(sides) + 1
 	}
 	return v + mod
 }
@@ -52,22 +54,21 @@ func (dg *DiceGenerator) Roll() int {
 	return dg.RollDice(2)
 }
 
-
 type tables struct {
 	Conversions map[string]map[string]float64 `json:"conversions"`
-	Orbital orbitalTable `json:"orbital"`
-	Luminosity map[string]map[string]float32 `json:"luminosity"` 
-	Profile profileTable `json:"profile"`
+	Orbital     orbitalTable                  `json:"orbital"`
+	Luminosity  map[string]map[string]float32 `json:"luminosity"`
+	Profile     profileTable                  `json:"profile"`
 }
 
 type orbitalTable struct {
-	Zones map[string]map[string]map[string][]int `json:"zones"`
-	Distances []float32 `json:"distances"`
-	SatelliteOrbits map[string]map[int]int `json:"satellite"`
+	Zones           map[string]map[string]map[string][]int `json:"zones"`
+	Distances       []float32                              `json:"distances"`
+	SatelliteOrbits map[string]map[int]int                 `json:"satellite"`
 }
 
 type profileTable struct {
-	Indices map[string][]string `json:"indices"`
+	Indices    map[string][]string          `json:"indices"`
 	Formatting map[string]map[string]string `json:"formatting"`
 }
 
@@ -92,7 +93,7 @@ func GetSatelliteOrbits() map[string]map[int]int {
 	return support_tables.Orbital.SatelliteOrbits
 }
 
-func LookUpOrbit(dg *DiceGenerator, ring bool) int{
+func LookUpOrbit(dg *DiceGenerator, ring bool) int {
 	satellite_orbits := GetSatelliteOrbits()
 	key := "extreme"
 	var roll int
@@ -107,9 +108,9 @@ func LookUpOrbit(dg *DiceGenerator, ring bool) int{
 	if options, ok := satellite_orbits[key]; ok {
 		roll = dg.Roll()
 		if len(options) == 6 {
-			roll = dg.RollDiceWithModifier(1,0)
+			roll = dg.RollDiceWithModifier(1, 0)
 		}
-		rv =  options[roll]
+		rv = options[roll]
 	} else {
 		ProcessError(errors.New("Unknown Key for Satellite Orbits"))
 	}
@@ -120,9 +121,9 @@ func ProcessError(err error) {
 	log.Fatal("Error: %s", err)
 }
 
-func MaxInt(nums ...int) int{
+func MaxInt(nums ...int) int {
 	max := nums[0]
-	for _,num := range nums {
+	for _, num := range nums {
 		if max < num {
 			max = num
 		}
@@ -130,7 +131,28 @@ func MaxInt(nums ...int) int{
 	return max
 }
 
+func MinInt(nums ...int) int {
+	min := nums[0]
+	for _, num := range nums {
+		if min > num {
+			min = num
+		}
+	}
+	return min
+}
+
 func Interface2Int(intf interface{}) int {
 	t := int(intf.(float64))
 	return t
+}
+
+func Intersect(a map[int]interface{}, b map[int]interface{}) map[int]interface{} {
+	intersection := make(map[int]interface{})
+
+	for k, v := range a {
+		if _, ok := b[k]; ok {
+			intersection[k] = v
+		}
+	}
+	return intersection
 }
