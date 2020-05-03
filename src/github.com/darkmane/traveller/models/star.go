@@ -1,33 +1,36 @@
 package models
 
 import (
-	"math/bits"
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"math/bits"
+
 	. "github.com/darkmane/traveller/util"
 )
 
 const NEAR_ORBIT = -1
 const FAR_ORBIT = 1<<(bits.UintSize-1) - 1 // MAX_INT
 const CENTER = -1 << (bits.UintSize - 1)   // MIN_INT
-const(
-    SOLITARY int = 7;
-    BINARY int = 11;
-	TRINARY int = 12;
+const (
+	SOLITARY int = 7
+	BINARY   int = 11
+	TRINARY  int = 12
 )
 const (
 	class string = "class"
-	size string = "size"
+	size  string = "size"
 	orbit string = "orbit"
 )
+
 type Star struct {
-	Class StellarClass `json:"class"`
-	Size  StellarSize  `json:"size"`
-	SizeFraction int   `json:"fraction"`
-	Orbit int          `json:"orbit"`
+	Class        StellarClass `json:"class"`
+	Size         StellarSize  `json:"size"`
+	SizeFraction int          `json:"fraction"`
+	Orbit        int          `json:"orbit"`
 }
 
-func (s *Star)GetType() BodyType {
+func (s *Star) GetType() BodyType {
 	return StellarBody
 }
 
@@ -39,7 +42,9 @@ func (s *Star) MarshalJSON() ([]byte, error) {
 func (s *Star) UnmarshalJSON(b []byte) error {
 	working_copy := make(map[string]interface{})
 	err := json.Unmarshal(b, &working_copy)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	s.FromMap(working_copy)
 
 	return nil
@@ -48,17 +53,17 @@ func (s *Star) UnmarshalJSON(b []byte) error {
 func (s *Star) FromMap(init map[string]interface{}) {
 	for k, v := range init {
 		switch k {
-			case class:
-				str := []byte(v.(string))
-				s.Class.UnmarshalJSON(str)
-				break
-			case size:
-				str := []byte(v.(string))
-				s.Size.UnmarshalJSON(str)
-				break
-			case orbit:
-				s.Orbit = Interface2Int(v)
-				break
+		case class:
+			str := []byte(v.(string))
+			s.Class.UnmarshalJSON(str)
+			break
+		case size:
+			str := []byte(v.(string))
+			s.Size.UnmarshalJSON(str)
+			break
+		case orbit:
+			s.Orbit = Interface2Int(v)
+			break
 		}
 	}
 }
@@ -72,7 +77,13 @@ func (s *Star) ToMap() map[string]interface{} {
 	return m
 }
 
+// StellarClass represents the spectral classification
 type StellarClass int
+
+// GetAllStellarClasses provides all stellar classes
+func GetAllStellarClasses() []StellarClass {
+	return ([]StellarClass{B, A, M, K, G, F})
+}
 
 const (
 	B StellarClass = iota
@@ -124,7 +135,13 @@ func (sc *StellarClass) ToString() string {
 	return stellarClassToString[*sc]
 }
 
+// StellarSize represents the size of a star
 type StellarSize int
+
+// GetAllStellarSizes returns all valid stellar sizes
+func GetAllStellarSizes() []StellarSize {
+	return ([]StellarSize{Ia, Ib, II, III, IV, VI, D})
+}
 
 const (
 	Ia StellarSize = iota
@@ -136,27 +153,29 @@ const (
 	VI
 	D
 )
+
 var stellarSizeToString = map[StellarSize]string{
-	Ia: "Ia",
-	Ib: "Ib",
-	II: "II",
+	Ia:  "Ia",
+	Ib:  "Ib",
+	II:  "II",
 	III: "III",
-	IV: "IV",
-	V: "V",
-	VI: "VI",
-	D: "D",
+	IV:  "IV",
+	V:   "V",
+	VI:  "VI",
+	D:   "D",
 }
 
 var stellarSizeToID = map[string]StellarSize{
-	"Ia": Ia,
-	"Ib": Ib,
-	"II": II,
+	"Ia":  Ia,
+	"Ib":  Ib,
+	"II":  II,
 	"III": III,
-	"IV": IV,
-	"V": V,
-	"VI": VI,
-	"D": D,
+	"IV":  IV,
+	"V":   V,
+	"VI":  VI,
+	"D":   D,
 }
+
 func (ss StellarSize) MarshalJSON() ([]byte, error) {
 	buffer := bytes.NewBufferString(`"`)
 	buffer.WriteString(stellarSizeToString[ss])
@@ -189,15 +208,15 @@ const (
 )
 
 var starPositionToString = map[StarPosition]string{
-	PRIMARY: "PRIMARY",
+	PRIMARY:   "PRIMARY",
 	SECONDARY: "SECONDARY",
-	TERTIARY: "TERTIARY",
+	TERTIARY:  "TERTIARY",
 }
 
 var starPositionToID = map[string]StarPosition{
-	"PRIMARY": PRIMARY,
+	"PRIMARY":   PRIMARY,
 	"SECONDARY": SECONDARY,
-	"TERTIARY": TERTIARY,
+	"TERTIARY":  TERTIARY,
 }
 
 func (sp StarPosition) MarshalJSON() ([]byte, error) {
@@ -219,19 +238,19 @@ func (sp *StarPosition) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (s *Star)GetOrbits(zones ...Zone) map[int]interface{} {
+func (s *Star) GetOrbits(zones ...Zone) map[int]interface{} {
 
 	var orbits []int
-	
-	orbit := GetAllOrbits()
-	stellarOrbits := orbit[s.Size.ToString()][s.Class.ToString()]
 
-	for z := range zones {
+	allOrbits := GetAllOrbits()
+	classString := fmt.Sprintf("%s%s", s.Class.ToString(), "0")
+	stellarOrbits := allOrbits[s.Size.ToString()][classString]
+
+	for _, z := range zones {
 		orbits = append(orbits, stellarOrbits[Zone(z).ToString()]...)
 	}
-
-	var returnOrbits map[int]interface{}
-	for o := range orbits {
+	returnOrbits := make(map[int]interface{})
+	for _, o := range orbits {
 		returnOrbits[o] = true
 	}
 	return returnOrbits
@@ -241,16 +260,16 @@ func generateStars(dg *DiceGenerator, population int, atmos int) map[StarPositio
 	rollClass := dg.Roll()
 	rollSize := dg.Roll()
 	star := dg.Roll()
-	
+
 	rv := make(map[StarPosition]*Star)
 
-	if (population > 7 || (atmos > 3 && atmos < 10)) {
-		rollClass += 4;
-		rollSize += 4;
+	if population > 7 || (atmos > 3 && atmos < 10) {
+		rollClass += 4
+		rollSize += 4
 	}
 	var sClass StellarClass = M
 	var sSize StellarSize = V
-	
+
 	switch rollSize {
 	case 0:
 		sSize = Ia
@@ -304,7 +323,7 @@ func generateStars(dg *DiceGenerator, population int, atmos int) map[StarPositio
 	if star > BINARY {
 		rv[SECONDARY] = generateCompanionStar(dg, rollClass, rollSize, SECONDARY)
 	}
-	
+
 	if star > TRINARY {
 		rv[TERTIARY] = generateCompanionStar(dg, rollClass, rollSize, TERTIARY)
 	}
@@ -329,13 +348,13 @@ func generateCompanionStar(dg *DiceGenerator, classMod int, sizeRoll int, positi
 	}
 
 	switch rollClass {
-	case 1: 
+	case 1:
 		sClass = B
 	case 2:
 		sClass = A
 	case 3, 4:
 		sClass = F
-	case 5,6:
+	case 5, 6:
 		sClass = G
 	case 7, 8:
 		sClass = K
@@ -395,7 +414,6 @@ func generateCompanionStar(dg *DiceGenerator, classMod int, sizeRoll int, positi
 
 }
 
-
-func (s *Star)GetNearestMajorClass() string {
+func (s *Star) GetNearestMajorClass() string {
 	return "M5"
 }

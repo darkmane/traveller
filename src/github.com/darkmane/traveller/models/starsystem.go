@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"log"
 
-	. "github.com/darkmane/traveller/util"
+	"github.com/darkmane/traveller/util"
 )
 
+// TravelZone  Interstellar Travel Zone
 type TravelZone int
 
 const (
@@ -48,8 +49,10 @@ func (tz *TravelZone) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// Zone stores orbital zone types
 type Zone int
 
+// Orbit Zones (UNAVAILABLE = inside star, INNER = inside habitable zone, OUTER = outside habitable zone )
 const (
 	UNAVAILABLE Zone = iota
 	INNER
@@ -185,7 +188,7 @@ func (ss *StarSystem) Coordinate() string {
 	return fmt.Sprint("%d-%d", ss.X, ss.Y)
 }
 
-func NewStarSystem(initial map[string]interface{}, dg *DiceGenerator) *StarSystem {
+func NewStarSystem(initial map[string]interface{}, dg *util.DiceGenerator) *StarSystem {
 
 	ss := new(StarSystem)
 
@@ -209,10 +212,10 @@ func NewStarSystem(initial map[string]interface{}, dg *DiceGenerator) *StarSyste
 		orbitRoll -= 2
 	}
 
-	ss.maxOrbits = MaxInt(orbitRoll, 1)
+	ss.maxOrbits = util.MaxInt(orbitRoll, 1)
 	ss.Orbits = make([]Orbit, ss.maxOrbits)
 	log.Printf("At most %d are available", ss.maxOrbits)
-	for k, _ := range ss.generateEmptyOrbits(dg) {
+	for k := range ss.generateEmptyOrbits(dg) {
 		log.Printf("Orbit %d of %d is empty", k, len(ss.Orbits))
 		ss.Orbits[k-1] = &(EmptyOrbit{StarSystemId: ss.Id, StellarOrbit: k})
 	}
@@ -220,8 +223,12 @@ func NewStarSystem(initial map[string]interface{}, dg *DiceGenerator) *StarSyste
 	gasGiantOrbits := ss.generateGasGiants(dg)
 	ss.Orbits = append(ss.Orbits, gasGiantOrbits...)
 
-	for o, _ := range ss.getAvailableOrbits() {
-		log.Printf("{0} is available", o)
+	planetoids := ss.placePlanetoidBelts(dg)
+	ss.Orbits = append(ss.Orbits, planetoids...)
+	minorPlanets := ss.generateMinorPlanets(dg)
+	ss.Orbits = append(ss.Orbits, minorPlanets...)
+	for i := range ss.getAvailableOrbits(INNER, HABITABLE, OUTER) {
+		log.Printf("%d is available", i)
 	}
 
 	log.Printf("New Star System : %v", filled)
@@ -233,11 +240,11 @@ func (ss *StarSystem) load(init map[string]interface{}) map[string]bool {
 	for k, v := range init {
 		switch k {
 		case x:
-			ss.X = Interface2Int(v)
+			ss.X = util.Interface2Int(v)
 			rv[k] = true
 			break
 		case y:
-			ss.Y = Interface2Int(v)
+			ss.Y = util.Interface2Int(v)
 			rv[k] = true
 			break
 		case sector:
@@ -277,7 +284,7 @@ func (ss *StarSystem) FromMap(init map[string]interface{}) {
 func (ss *StarSystem) ToMap() map[string]interface{} {
 	p := ss.Planet
 	output := p.ToMap()
-	dg := NewDiceGenerator("foo")
+	dg := util.NewDiceGenerator("foo")
 	ss.Classifications = calculateTradeFacilities(&dg, p, ss, HABITABLE)
 
 	output[x] = ss.X
@@ -313,7 +320,20 @@ func (ss *StarSystem) MarshalJSON() ([]byte, error) {
 	return json.Marshal(ss.ToMap())
 }
 
-func (ss *StarSystem) generateEmptyOrbits(dg *DiceGenerator) map[int]interface{} {
+func (ss *StarSystem) GetBodies(bodyTypes ...BodyType) []Orbit {
+	var bodies []Orbit
+	bodies = make([]Orbit, 0)
+	for _, bt := range bodyTypes {
+		for _, o := range ss.Orbits {
+			if o != nil && o.GetType() == bt {
+				bodies = append(bodies, o)
+			}
+		}
+	}
+	return bodies
+}
+
+func (ss *StarSystem) generateEmptyOrbits(dg *util.DiceGenerator) map[int]interface{} {
 	empty := make(map[int]interface{})
 	emptyRoll := dg.RollDice(1)
 	numberEmptyRoll := dg.RollDice(1)
@@ -336,16 +356,16 @@ func (ss *StarSystem) generateEmptyOrbits(dg *DiceGenerator) map[int]interface{}
 			numberEmpty = 3
 		}
 	}
-	numberEmpty = MinInt(numberEmpty, ss.maxOrbits-1)
+	numberEmpty = util.MinInt(numberEmpty, ss.maxOrbits-1)
 	for len(empty) < numberEmpty {
-		empty[MinInt(dg.Roll(), ss.maxOrbits-1)] = true
+		empty[util.MinInt(dg.Roll(), ss.maxOrbits-1)] = true
 	}
 
 	return empty
 
 }
 
-func (ss *StarSystem) generateGasGiants(dg *DiceGenerator) []Orbit {
+func (ss *StarSystem) generateGasGiants(dg *util.DiceGenerator) []Orbit {
 	var gasGiants []Orbit
 	if dg.Roll() < 10 {
 		numGG := 0
@@ -361,7 +381,7 @@ func (ss *StarSystem) generateGasGiants(dg *DiceGenerator) []Orbit {
 		case 11, 12:
 			numGG = 5
 		}
-		numGG = MinInt(numGG, ss.maxOrbits)
+		numGG = util.MinInt(numGG, ss.maxOrbits)
 
 		i := 0
 		for i < numGG {
@@ -372,9 +392,25 @@ func (ss *StarSystem) generateGasGiants(dg *DiceGenerator) []Orbit {
 	return gasGiants
 }
 
-func (ss *StarSystem) placePlanetoidBelts(dg *DiceGenerator, gasGiantCount int) []Orbit {
+func (ss *StarSystem) generateMinorPlanets(dg *util.DiceGenerator) []Orbit {
+	orbits := make([]Orbit, 0)
+	for mainOrbit := range ss.getAvailableOrbits(INNER) {
+		newMinorPlanet(dg, *ss.Stars[PRIMARY], mainOrbit, INNER, ss)
+	}
+	for mainOrbit := range ss.getAvailableOrbits(HABITABLE) {
+		newMinorPlanet(dg, *ss.Stars[PRIMARY], mainOrbit, HABITABLE, ss)
+	}
+	for mainOrbit := range ss.getAvailableOrbits(OUTER) {
+		newMinorPlanet(dg, *ss.Stars[PRIMARY], mainOrbit, OUTER, ss)
+	}
+	return orbits
+}
+
+func (ss *StarSystem) placePlanetoidBelts(dg *util.DiceGenerator) []Orbit {
 	var pb []Orbit
-	rollForPlanetoids := MaxInt(0, dg.Roll()-gasGiantCount)
+
+	gasGiantCount := len(ss.GetBodies(SmallGasGiant, LargeGasGiant))
+	rollForPlanetoids := util.MaxInt(0, dg.Roll()-gasGiantCount)
 
 	if rollForPlanetoids > 7 {
 		return pb
@@ -382,13 +418,13 @@ func (ss *StarSystem) placePlanetoidBelts(dg *DiceGenerator, gasGiantCount int) 
 
 	log.Printf("Planetoid belts present")
 	pbCount := 1
-	switch MaxInt(0, dg.Roll()-gasGiantCount) {
+	switch util.MaxInt(0, dg.Roll()-gasGiantCount) {
 	case 0:
 		pbCount = 3
 	case 1, 2, 3, 4, 5, 6:
 		pbCount = 3
 	}
-	pbCount = MinInt(pbCount, len(ss.getAvailableOrbits()))
+	pbCount = util.MinInt(pbCount, len(ss.getAvailableOrbits()))
 	var counter int
 	counter = 0
 	for counter < pbCount {
@@ -400,10 +436,11 @@ func (ss *StarSystem) placePlanetoidBelts(dg *DiceGenerator, gasGiantCount int) 
 
 func (ss *StarSystem) getAvailableOrbits(zones ...Zone) map[int]interface{} {
 	availableOrbits := ss.Stars[PRIMARY].GetOrbits(zones...)
-	log.Printf("Available Orbits: %d", len(ss.Orbits))
+	log.Printf("StarSystem.Orbits: %v", ss.Orbits)
+	log.Printf("Available Orbits: %d, Used Orbits: %d", len(availableOrbits), len(ss.Orbits))
 	for i, o := range ss.Orbits {
+		delete(availableOrbits, i)
 		if o != nil {
-			delete(availableOrbits, i)
 			log.Printf("Orbit is nil")
 		}
 	}

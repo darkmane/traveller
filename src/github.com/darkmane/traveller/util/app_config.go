@@ -2,18 +2,20 @@ package util
 
 import (
 	"os"
+
 	"github.com/kelseyhightower/envconfig"
 	"gopkg.in/yaml.v2"
 )
 
-
+// Config Basic application configuration
 type Config struct {
-	Database string `yaml:"database", envconfig:DATABASE`
-	Username string `yaml:"username", envconfig:DBUSERNAME`
-	Password string `yaml:"password", envconfig:DBPASSWORD`
-	Seed     string `yaml:"seed", envconfig:RNG_SEED`
+	Database string `yaml:"database" envconfig:"DATABASE"`
+	Username string `yaml:"username" envconfig:"DBUSERNAME"`
+	Password string `yaml:"password" envconfig:"DBPASSWORD"`
+	Seed     string `yaml:"seed" envconfig:"RNG_SEED"`
 }
 
+// GetConfig Load App configuration
 func GetConfig() Config {
 	var cfg Config
 	loadConfigFile(&cfg)

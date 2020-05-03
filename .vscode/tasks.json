@@ -21,6 +21,16 @@
                 "kind": "test",
                 "isDefault": false
             }
+        },
+        {
+
+            "label": "skaffold debug",
+            "type": "shell",
+            "command": "skaffold debug --port-forward",
+            "group": {
+                "kind": "test",
+                "isDefault": false
+            }
         }
     ]
 }
