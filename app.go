@@ -6,12 +6,11 @@ import (
 	"os"
 	"strings"
 
+	"darkmane/traveller/handlers"
+	"darkmane/traveller/util"
+
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-
-	"github.com/darkmane/traveller/handlers"
-
-	"github.com/darkmane/traveller/util"
 )
 
 func main() {

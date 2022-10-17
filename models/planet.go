@@ -1,7 +1,7 @@
 package models
 
 import (
-	. "github.com/darkmane/traveller/util"
+	. "darkmane/traveller/util"
 )
 
 const (
