@@ -3,9 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/darkmane/traveller/models"
 	. "github.com/darkmane/traveller/util"
@@ -30,10 +31,10 @@ func createStarSystemHandler(w http.ResponseWriter, r *http.Request) {
 	// t := time.Now()
 	// dg := NewDiceGenerator(fmt.Sprintf("%d", t.Unix()))
 	init, err := parseRequest(r)
-	log.Printf(fmt.Sprintf("Body: %v", init))
+	log.Trace().Interface("initial_map", init)
 	if err != nil {
 		w.WriteHeader(500)
-		log.Printf(fmt.Sprintf("%v", err))
+		log.Error().Err(err)
 		return
 	}
 	ss := new(models.StarSystem)
@@ -41,7 +42,7 @@ func createStarSystemHandler(w http.ResponseWriter, r *http.Request) {
 	results, err := json.Marshal(ss)
 	if err != nil {
 		w.WriteHeader(500)
-		log.Printf(fmt.Sprintf("%v", err))
+		log.Error().Err(err)
 		return
 	}
 	w.Header().Set(CONTENT_TYPE, APPLICATION_JSON)
@@ -56,19 +57,16 @@ func getStarSystemHandler(w http.ResponseWriter, r *http.Request) {
 
 	ss := models.NewStarSystem(make(map[string]interface{}), &dg)
 	if ss.Planet == nil {
-		log.Printf("Planet is nil")
+		log.Debug().Interface("star_system", ss).Msg("Planet is nil")
 	}
 
-	// if ss.Planet.UniversalPlanetProfile == nil {
-	// 	log.Printf("UPP is nil")
-	// }
 	results, err := json.Marshal(ss)
 	if err != nil {
 		w.WriteHeader(500)
-		log.Printf(fmt.Sprintf("%v", err))
+		log.Error().Err(err).Msg("Unable to Marshal StarSystem")
 		return
 	}
-	log.Printf(fmt.Sprintf("StarSystem: %v", ss))
+	log.Trace().Interface("star_system", ss)
 	w.Header().Set(CONTENT_TYPE, APPLICATION_JSON)
 	w.Write(results)
 }
@@ -82,7 +80,8 @@ func getMultipleStarSystemHandler(w http.ResponseWriter, r *http.Request) {
 	results, err := json.Marshal(upps)
 	if err != nil {
 		w.WriteHeader(500)
-		log.Printf(fmt.Sprintf("%v", err))
+		log.Error().Err(err)
+		
 		return
 	}
 	w.Header().Set(CONTENT_TYPE, APPLICATION_JSON)
@@ -95,7 +94,7 @@ func updateStarSystemHandler(w http.ResponseWriter, r *http.Request) {
 	results, err := json.Marshal(upp)
 	if err != nil {
 		w.WriteHeader(500)
-		log.Printf(fmt.Sprintf("%v", err))
+		log.Error().Err(err)
 		return
 	}
 	w.Header().Set(CONTENT_TYPE, APPLICATION_JSON)
@@ -104,5 +103,5 @@ func updateStarSystemHandler(w http.ResponseWriter, r *http.Request) {
 
 func deleteStarSystemHandler(w http.ResponseWriter, r *http.Request) {
 	// dg := NewDiceGenerator(cfg.Seed)
-	log.Printf("deleteStarSystemHandler")
+	log.Trace().Msg("deleteStarSystemHandler")
 }

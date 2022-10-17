@@ -15,7 +15,7 @@ func GetAllOrbits() map[string]map[string]map[string][]int {
 	if stellarOrbits == nil {
 		stellarOrbits = make(map[string]map[string]map[string][]int)
 		rawStellarOrbits, exists := Get("/orbital/zones.yaml")
-		if exists {
+		if !exists {
 			log.Printf("Stellar Orbital Zones missing")
 		}
 		err := yaml.Unmarshal(rawStellarOrbits, stellarOrbits)
@@ -55,10 +55,6 @@ func LookUpOrbit(dg *DiceGenerator, ring bool) int {
 		key = "close"
 	case roll <= 11:
 		key = "far"
-	}
-
-	for k, v := range satelliteOrbits {
-		log.Printf("%s => %v", k, v)
 	}
 
 	var rv int

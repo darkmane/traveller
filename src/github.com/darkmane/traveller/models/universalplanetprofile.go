@@ -1,8 +1,10 @@
 package models
 
 import (
-	. "github.com/darkmane/traveller/util"
-	"log"
+	"fmt"
+
+	"github.com/darkmane/traveller/util"
+	"github.com/rs/zerolog/log"
 )
 
 type UniversalPlanetProfile struct {
@@ -18,30 +20,30 @@ type UniversalPlanetProfile struct {
 func (upp *UniversalPlanetProfile) FromMap(init map[string]interface{}) {
 	for k, v := range init {
 		switch k {
-			case "size":
-				upp.Size = Interface2Int(v)
-				break;
-			case "atmosphere":
-				upp.Atmosphere = Interface2Int(v)
-				break;
-			case "hydro":
-				upp.Hydro = Interface2Int(v)
-				break;
-			case "population":
-				upp.Population = Interface2Int(v)
-				break;
-			case "government":
-				upp.Government = Interface2Int(v)
-				break;
-			case "lawlevel":
-				upp.LawLevel = Interface2Int(v)
-				break;
-			case "techlevel":
-				upp.TechLevel = Interface2Int(v)
-				break;
-			default:
-				log.Printf("%s: %v", k, v)
-				break;
+		case "size":
+			upp.Size = util.Interface2Int(v)
+			break
+		case "atmosphere":
+			upp.Atmosphere = util.Interface2Int(v)
+			break
+		case "hydro":
+			upp.Hydro = util.Interface2Int(v)
+			break
+		case "population":
+			upp.Population = util.Interface2Int(v)
+			break
+		case "government":
+			upp.Government = util.Interface2Int(v)
+			break
+		case "lawlevel":
+			upp.LawLevel = util.Interface2Int(v)
+			break
+		case "techlevel":
+			upp.TechLevel = util.Interface2Int(v)
+			break
+		default:
+			log.Debug().Msg(fmt.Sprintf("%s: %v", k, v))
+			break
 		}
 	}
 }

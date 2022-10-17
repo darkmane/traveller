@@ -14,6 +14,11 @@ const (
 	PlanetoidBelt
 	StellarBody
 	Empty
+	StellarBodyString   = "star"
+	SmallGasGiantString = "small_gas_giant"
+	LargeGasGiantString = "large_gas_giant"
+	PlanetoidBeltString = "planetoid_belt"
+	RockyPlanetString   = "rocky_planet"
 )
 
 type Body interface {
@@ -21,19 +26,19 @@ type Body interface {
 }
 
 var bodyTypeToString = map[BodyType]string{
-	StellarBody: "STAR",
-	SmallGasGiant:  "SMALL_GAS_GIANT",
-	LargeGasGiant:  "LARGE_GAS_GIANT",
-	PlanetoidBelt: "PLANETOID_BELT",
-	RockyPlanet: "ROCKY_PLANET",
+	StellarBody:   StellarBodyString,
+	SmallGasGiant: SmallGasGiantString,
+	LargeGasGiant: LargeGasGiantString,
+	PlanetoidBelt: PlanetoidBeltString,
+	RockyPlanet:   RockyPlanetString,
 }
 
 var bodyTypeToID = map[string]BodyType{
-	"STAR": StellarBody,
-	"SMALL_GAS_GIANT": SmallGasGiant,
-	"LARGE_GAS_GIANT": LargeGasGiant, 
-	"PLANETOID_BELT": PlanetoidBelt,
-	"ROCKY_PLANET": RockyPlanet,
+	StellarBodyString:   StellarBody,
+	SmallGasGiantString: SmallGasGiant,
+	LargeGasGiantString: LargeGasGiant,
+	PlanetoidBeltString: PlanetoidBelt,
+	RockyPlanetString:   RockyPlanet,
 }
 
 // MarshalJSON marshals the enum as a quoted json string

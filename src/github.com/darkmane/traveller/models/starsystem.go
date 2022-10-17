@@ -1,164 +1,13 @@
 package models
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/darkmane/traveller/util"
 )
-
-// TravelZone  Interstellar Travel Zone
-type TravelZone int
-
-const (
-	Green TravelZone = iota
-	Yellow
-	Red
-)
-
-var travelZoneToString = map[TravelZone]string{
-	Green:  "GREEN",
-	Yellow: "YELLOW",
-	Red:    "RED",
-}
-
-var travelZoneToID = map[string]TravelZone{
-	"GREEN":  Green,
-	"YELLOW": Yellow,
-	"RED":    Red,
-}
-
-func (tz TravelZone) MarshalJSON() ([]byte, error) {
-	buffer := bytes.NewBufferString(`"`)
-	buffer.WriteString(travelZoneToString[tz])
-	buffer.WriteString(`"`)
-	return buffer.Bytes(), nil
-}
-
-// UnmarshalJSON unmashals a quoted json string to the enum value
-func (tz *TravelZone) UnmarshalJSON(b []byte) error {
-	var j string
-	err := json.Unmarshal(b, &j)
-	if err != nil {
-		return err
-	}
-	// Note that if the string cannot be found then it will be set to the zero value, 'B' in this case.
-	*tz = travelZoneToID[j]
-	return nil
-}
-
-// Zone stores orbital zone types
-type Zone int
-
-// Orbit Zones (UNAVAILABLE = inside star, INNER = inside habitable zone, OUTER = outside habitable zone )
-const (
-	UNAVAILABLE Zone = iota
-	INNER
-	HABITABLE
-	OUTER
-)
-
-var zoneToString = map[Zone]string{
-	UNAVAILABLE: "UNAVAILABLE",
-	INNER:       "INNER",
-	HABITABLE:   "HABITABLE",
-	OUTER:       "OUTER",
-}
-
-var zoneToID = map[string]Zone{
-	"UNAVAILABLE": UNAVAILABLE,
-	"INNER":       INNER,
-	"HABITABLE":   HABITABLE,
-	"OUTER":       OUTER,
-}
-
-func (sz Zone) MarshalJSON() ([]byte, error) {
-	buffer := bytes.NewBufferString(`"`)
-	buffer.WriteString(zoneToString[sz])
-	buffer.WriteString(`"`)
-	return buffer.Bytes(), nil
-}
-
-// UnmarshalJSON unmashals a quoted json string to the enum value
-func (z *Zone) UnmarshalJSON(b []byte) error {
-	var j string
-	err := json.Unmarshal(b, &j)
-	if err != nil {
-		return err
-	}
-	// Note that if the string cannot be found then it will be set to the zero value, 'B' in this case.
-	*z = zoneToID[j]
-	return nil
-}
-
-func (z Zone) ToString() string {
-	return zoneToString[z]
-}
-
-type Starport int
-
-const (
-	StarportA = iota
-	StarportB
-	StarportC
-	StarportD
-	StarportE
-	StarportX
-	StarportY
-	StarportH
-	StarportG
-	StarportF
-	StarportNone
-)
-
-var starportToID = map[string]Starport{
-	"Class A Starport":       StarportA,
-	"Class B Starport":       StarportB,
-	"Class C Starport":       StarportC,
-	"Class D Starport":       StarportD,
-	"Class E Starport":       StarportE,
-	"Class X Starport":       StarportX,
-	"No Spaceport":           StarportY,
-	"Primitive Spaceport":    StarportH,
-	"Poor quality Spaceport": StarportG,
-	"Good quality Spaceport": StarportF,
-	"No Starport":            StarportNone,
-}
-
-var starportIDToString = map[Starport]string{
-	StarportA:    "Class A Starport",
-	StarportB:    "Class B Starport",
-	StarportC:    "Class C Starport",
-	StarportD:    "Class D Starport",
-	StarportE:    "Class E Starport",
-	StarportX:    "Class X Starport",
-	StarportY:    "No Spaceport",
-	StarportH:    "Primitive Spaceport",
-	StarportG:    "Poor quality Spaceport",
-	StarportF:    "Good quality Spaceport",
-	StarportNone: "No Starport",
-}
-
-func (sp Starport) MarshalJSON() ([]byte, error) {
-	buffer := bytes.NewBufferString(`"`)
-	buffer.WriteString(starportIDToString[sp])
-	buffer.WriteString(`"`)
-	return buffer.Bytes(), nil
-}
-
-// UnmarshalJSON unmashals a quoted json string to the enum value
-func (sp Starport) UnmarshalJSON(b []byte) error {
-	var j string
-	err := json.Unmarshal(b, &j)
-	if err != nil {
-		return err
-	}
-	// Note that if the string cannot be found then it will be set to the zero value, 'B' in this case.
-	sp = starportToID[j]
-	return nil
-}
 
 type StarSystem struct {
 	Stars map[StarPosition]*Star `json:"stars"`
@@ -193,7 +42,7 @@ func NewStarSystem(initial map[string]interface{}, dg *util.DiceGenerator) *Star
 	ss := new(StarSystem)
 
 	p := NewPlanet(initial, dg)
-	filled := ss.load(initial)
+	ss.FromMap(initial)
 	ss.Planet = p
 	ss.Stars = generateStars(dg, ss.Size, ss.Atmosphere)
 
@@ -213,72 +62,60 @@ func NewStarSystem(initial map[string]interface{}, dg *util.DiceGenerator) *Star
 	}
 
 	ss.maxOrbits = util.MaxInt(orbitRoll, 1)
-	ss.Orbits = make([]Orbit, ss.maxOrbits)
-	log.Printf("At most %d are available", ss.maxOrbits)
+	ss.Orbits = make([]Orbit, ss.maxOrbits+1)
+	log.Trace().Int("maxOrbits", ss.maxOrbits).Msg(fmt.Sprintf("At most %d are available", ss.maxOrbits))
 	for k := range ss.generateEmptyOrbits(dg) {
-		log.Printf("Orbit %d of %d is empty", k, len(ss.Orbits))
+		log.Trace().Msg(fmt.Sprintf("Orbit %d of %d is empty", k, len(ss.Orbits)))
 		ss.Orbits[k-1] = &(EmptyOrbit{StarSystemId: ss.Id, StellarOrbit: k})
 	}
 
 	gasGiantOrbits := ss.generateGasGiants(dg)
-	ss.Orbits = append(ss.Orbits, gasGiantOrbits...)
-
-	planetoids := ss.placePlanetoidBelts(dg)
-	ss.Orbits = append(ss.Orbits, planetoids...)
-	minorPlanets := ss.generateMinorPlanets(dg)
-	ss.Orbits = append(ss.Orbits, minorPlanets...)
-	for i := range ss.getAvailableOrbits(INNER, HABITABLE, OUTER) {
-		log.Printf("%d is available", i)
+	for _, gg := range gasGiantOrbits {
+		so, _ := gg.GetOrbit()
+		ss.Orbits[so] = gg
 	}
 
-	log.Printf("New Star System : %v", filled)
+	planetoids := ss.placePlanetoidBelts(dg)
+	for _, pb := range planetoids {
+		so, _ := pb.GetOrbit()
+		ss.Orbits[so] = pb
+	}
+	// ss.Orbits = append(ss.Orbits, planetoids...)
+	ss.generateMinorPlanets(dg)
+
 	return ss
 }
 
-func (ss *StarSystem) load(init map[string]interface{}) map[string]bool {
-	rv := make(map[string]bool)
+func (ss *StarSystem) FromMap(init map[string]interface{}) {
+
 	for k, v := range init {
 		switch k {
 		case x:
 			ss.X = util.Interface2Int(v)
-			rv[k] = true
 			break
 		case y:
 			ss.Y = util.Interface2Int(v)
-			rv[k] = true
 			break
 		case sector:
 			ss.Sector = v.(string)
-			rv[k] = true
 			break
 		case subsector:
 			ss.SubSector = v.(string)
-			rv[k] = true
 			break
 		case travel_zone:
 			s := []byte(v.(string))
 			ss.TravelZone.UnmarshalJSON(s)
-			rv[k] = true
 			break
 		case scout:
 			ss.ScoutBase = v.(bool)
-			rv[k] = true
 			break
 		case naval:
 			ss.NavalBase = v.(bool)
-			rv[k] = true
 			break
 		}
 	}
-	p := ss.Planet
-	p.FromMap(init)
-	ss.Planet = p
 
-	return rv
-}
-
-func (ss *StarSystem) FromMap(init map[string]interface{}) {
-	ss.load(init)
+	ss.Planet.FromMap(init)
 }
 
 func (ss *StarSystem) ToMap() map[string]interface{} {
@@ -296,7 +133,7 @@ func (ss *StarSystem) ToMap() map[string]interface{} {
 	output[naval] = ss.NavalBase
 	os := make([]Orbit, 0)
 	if ss.Orbits != nil {
-		log.Printf("Orbits is not nil: %v", ss.Orbits)
+		log.Trace().Interface("orbits", ss.Orbits).Msg(fmt.Sprintf("Orbits is not nil: %v", ss.Orbits))
 		os = ss.Orbits
 	}
 
@@ -385,25 +222,27 @@ func (ss *StarSystem) generateGasGiants(dg *util.DiceGenerator) []Orbit {
 
 		i := 0
 		for i < numGG {
-			log.Printf("Placing %d GG", i)
+			log.Trace().Msg(fmt.Sprintf("Placing %d GG", i))
+			gg := CreateGasGiant(dg)
+			gasGiants = append(gasGiants, gg)
 			i += 1
 		}
 	}
 	return gasGiants
 }
 
-func (ss *StarSystem) generateMinorPlanets(dg *util.DiceGenerator) []Orbit {
-	orbits := make([]Orbit, 0)
-	for mainOrbit := range ss.getAvailableOrbits(INNER) {
-		newMinorPlanet(dg, *ss.Stars[PRIMARY], mainOrbit, INNER, ss)
+func (ss *StarSystem) generateMinorPlanets(dg *util.DiceGenerator) {
+
+	message := ""
+	for z := range [3]Zone{INNER, HABITABLE, OUTER} {
+		zone := Zone(z)
+		message += fmt.Sprintf("%v: %d", zone.ToString(), len(ss.getAvailableOrbits(zone)))
+		for mainOrbit := range ss.getAvailableOrbits(zone) {
+			mp := newMinorPlanet(dg, *ss.Stars[PRIMARY], mainOrbit, zone, ss)
+			ss.Orbits[mainOrbit] = mp
+		}
 	}
-	for mainOrbit := range ss.getAvailableOrbits(HABITABLE) {
-		newMinorPlanet(dg, *ss.Stars[PRIMARY], mainOrbit, HABITABLE, ss)
-	}
-	for mainOrbit := range ss.getAvailableOrbits(OUTER) {
-		newMinorPlanet(dg, *ss.Stars[PRIMARY], mainOrbit, OUTER, ss)
-	}
-	return orbits
+	log.Trace().Msg(message)
 }
 
 func (ss *StarSystem) placePlanetoidBelts(dg *util.DiceGenerator) []Orbit {
@@ -416,7 +255,7 @@ func (ss *StarSystem) placePlanetoidBelts(dg *util.DiceGenerator) []Orbit {
 		return pb
 	}
 
-	log.Printf("Planetoid belts present")
+	log.Trace().Msg(fmt.Sprintf("Planetoid belts present"))
 	pbCount := 1
 	switch util.MaxInt(0, dg.Roll()-gasGiantCount) {
 	case 0:
@@ -428,7 +267,7 @@ func (ss *StarSystem) placePlanetoidBelts(dg *util.DiceGenerator) []Orbit {
 	var counter int
 	counter = 0
 	for counter < pbCount {
-		log.Printf("Placing Planetoid Belt %d", counter)
+		log.Trace().Msg(fmt.Sprintf("Placing Planetoid Belt %d", counter))
 		counter += 1
 	}
 	return pb
@@ -436,12 +275,16 @@ func (ss *StarSystem) placePlanetoidBelts(dg *util.DiceGenerator) []Orbit {
 
 func (ss *StarSystem) getAvailableOrbits(zones ...Zone) map[int]interface{} {
 	availableOrbits := ss.Stars[PRIMARY].GetOrbits(zones...)
-	log.Printf("StarSystem.Orbits: %v", ss.Orbits)
-	log.Printf("Available Orbits: %d, Used Orbits: %d", len(availableOrbits), len(ss.Orbits))
+
 	for i, o := range ss.Orbits {
-		delete(availableOrbits, i)
 		if o != nil {
-			log.Printf("Orbit is nil")
+			delete(availableOrbits, i)
+		}
+	}
+
+	for i := range availableOrbits {
+		if i > ss.maxOrbits {
+			delete(availableOrbits, i)
 		}
 	}
 

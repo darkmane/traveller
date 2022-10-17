@@ -9,6 +9,7 @@ import (
 
 // Config Basic application configuration
 type Config struct {
+	LogLevel string `yaml:"loglevel" envconfig:"LOG_LEVEL"`
 	Database string `yaml:"database" envconfig:"DATABASE"`
 	Username string `yaml:"username" envconfig:"DBUSERNAME"`
 	Password string `yaml:"password" envconfig:"DBPASSWORD"`

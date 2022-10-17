@@ -1,5 +1,13 @@
 package models
 
+import (
+	"encoding/json"
+)
+const (
+ body_type = "type"
+ stellar = "stellar_orbit"
+ planetary = "planetary_orbit"
+)
 type Orbit interface {
 	GetType() BodyType
 	GetOrbit() (int, int)
@@ -30,4 +38,17 @@ func (eo *EmptyOrbit) GetType() BodyType {
 
 func (eo *EmptyOrbit) GetOrbit() (int, int) {
 	return eo.StellarOrbit, eo.PlanetaryOrbit
+}
+
+func (eo *EmptyOrbit) MarshalJSON() ([]byte, error) {
+	return json.Marshal(eo.ToMap())
+}
+
+func (eo *EmptyOrbit) ToMap() map[string]interface{} {
+   m := make(map[string]interface{})
+	 m[body_type] = "empty_orbit"
+	 m[stellar] = eo.StellarOrbit
+	 m[planetary] = eo.PlanetaryOrbit
+
+	 return m
 }

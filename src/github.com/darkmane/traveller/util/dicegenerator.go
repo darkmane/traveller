@@ -43,3 +43,7 @@ func (dg *DiceGenerator) RollDice(dice int) int {
 func (dg *DiceGenerator) Roll() int {
 	return dg.RollDice(2)
 }
+
+func (dg *DiceGenerator) Select(numElements int) int {
+	return dg.rng.Intn(numElements)
+}

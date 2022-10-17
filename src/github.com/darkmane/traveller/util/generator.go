@@ -57,7 +57,7 @@ func main() {
 			log.Println(path, "is a file, baking in... \U0001F31F")
 			b, err := ioutil.ReadFile(path)
 			if err != nil {
-				log.Printf("Error reading %s: %s", path, err)
+				log.Error().Err(err).Str("path", path).Msg("Error reading")
 				return err
 			}
 			resources[relativePath] = b
@@ -66,12 +66,12 @@ func main() {
 	})
 
 	if err != nil {
-		log.Fatal("Error walking through resources directory:", err)
+		log.Fatal().Err(err).Msg("Error walking through resources directory")
 	}
 
 	f, err := os.Create(blob)
 	if err != nil {
-		log.Fatal("Error creating blob file:", err)
+		log.Fatal().Err(err).Msg("Error creating blob file")
 	}
 	defer f.Close()
 
@@ -84,13 +84,13 @@ func main() {
 
 	data, err := format.Source(builder.Bytes())
 	if err != nil {
-		log.Fatal("Error formatting generated code", err)
+		log.Fatal().Err(err).Msg("Error formatting generated code")
 	}
 	err = ioutil.WriteFile(blob, data, os.ModePerm)
 	if err != nil {
-		log.Fatal("Error writing blob file", err)
+		log.Fatal().Err(err).Msg("Error writing blob file")
 	}
 
-	log.Println("Baking resources done... \U0001F680")
-	log.Println("DO NOT COMMIT util/blob.go \U0001F47B")
+	log.Debug().Msg("Baking resources done... \U0001F680")
+	log.Debug().Msg("DO NOT COMMIT util/blob.go \U0001F47B")
 }

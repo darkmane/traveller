@@ -3,20 +3,22 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"log"
+
 	"encoding/json"
+
+	"github.com/rs/zerolog/log"
 
 	. "github.com/darkmane/traveller/util"
 )
+
 var cfg Config
 
-
 const (
-	GET string = "GET"
-	POST string = "POST"
-	DELETE string = "DELETE"
-	PUT string = "PUT"
-	CONTENT_TYPE string = "Content-Type"
+	GET              string = "GET"
+	POST             string = "POST"
+	DELETE           string = "DELETE"
+	PUT              string = "PUT"
+	CONTENT_TYPE     string = "Content-Type"
 	APPLICATION_JSON string = "application/json"
 )
 
@@ -37,7 +39,7 @@ func parseRequest(r *http.Request) (map[string]interface{}, error) {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&rv)
 	if err != nil {
-		log.Fatal(fmt.Sprintf("Error: %v", err))
+		log.Fatal().Msg(fmt.Sprintf("Error: %v", err))
 		return nil, err
 	}
 

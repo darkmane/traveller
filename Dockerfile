@@ -5,6 +5,8 @@ WORKDIR /go/src/app
 # RUN go get -d -v ./...
 RUN go get gopkg.in/yaml.v2
 RUN go get github.com/kelseyhightower/envconfig
+RUN go get github.com/rs/zerolog
+
 ADD ./*.go /go/src/app
 ADD src/ ..
 RUN go generate ./...
