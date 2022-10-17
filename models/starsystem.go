@@ -6,7 +6,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"github.com/darkmane/traveller/util"
+	"darkmane/traveller/util"
 )
 
 type StarSystem struct {

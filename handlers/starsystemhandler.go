@@ -8,8 +8,8 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	"github.com/darkmane/traveller/models"
-	. "github.com/darkmane/traveller/util"
+	"darkmane/traveller/models"
+	. "darkmane/traveller/util"
 )
 
 func starSystemHandlers(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +81,7 @@ func getMultipleStarSystemHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(500)
 		log.Error().Err(err)
-		
+
 		return
 	}
 	w.Header().Set(CONTENT_TYPE, APPLICATION_JSON)

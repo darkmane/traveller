@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"math/bits"
 
-	. "github.com/darkmane/traveller/util"
+	. "darkmane/traveller/util"
 )
 
 const NEAR_ORBIT = -1

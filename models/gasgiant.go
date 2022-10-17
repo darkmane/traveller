@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/darkmane/traveller/util"
+	"darkmane/traveller/util"
 )
 
 const (

@@ -3,7 +3,8 @@ package models
 import (
 	"fmt"
 
-	"github.com/darkmane/traveller/util"
+	"darkmane/traveller/util"
+
 	"github.com/rs/zerolog/log"
 )
 
